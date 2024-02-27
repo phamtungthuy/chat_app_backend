@@ -2,3 +2,6 @@ Django
 mysqlclient
 python-dotenv
 django-cors-headers
+djangorestframework
+djangorestframework-simplejwt
+drf-spectacular
