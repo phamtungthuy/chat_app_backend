@@ -1,8 +1,102 @@
 from django.shortcuts import render
-
+from django.contrib.auth.models import User
+from .serializer import UserSerializer
+from rest_framework.response import Response
+from rest_framework import status, serializers
+from rest_framework_simplejwt.tokens import RefreshToken
+from .models import UserProfile
+from .utils import sendVerificationEmail
 # Create your views here.
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from drf_spectacular.utils import extend_schema
 
-
+@extend_schema(tags=['User'])
 class UserViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    
+    def get_permission(self):
+        admin_actions = []
+        authenicate_actions = []
+        if self.action in authenicate_actions:
+            permission_classes = [IsAuthenticated]
+        elif self.action in admin_actions:
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
+        
+    def getAllUsers(self, request):
+        users = self.queryset.all()
+        serializer = self.serializer_class(users, many=True)
+        return Response({"message": "Get all users successfully", "data": serializer.data})
+        
+    def login(self, request):
+        username = request.data.get('username', None)
+        email = request.data.get('email', None)
+        password = request.data.get('password')
+        try:
+            if username is not None:
+                user = User.objects.get(username=username)
+            else:
+                user = User.objects.get(email=email)
+            if (user.check_password(password)):
+                userProfile = UserProfile.objects.get(user=user)
+                if user.is_active:
+                    if (userProfile.verified):
+                        refresh = RefreshToken.for_user(user)
+                        token = {
+                            'refresh': str(refresh),
+                            'access': str(refresh.access_token)
+                        }
+                        return Response({"message": "Login successfully", "data": token})
+                    else:
+                        return Response({"message": "User has not been verified"}, status=status.HTTP_401_UNAUTHORIZED)
+                else:
+                    return Response({"message": "User has been banned"}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'message': "Password not match"}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"message": "Username or email not match"}, status=status.HTTP_404_NOT_FOUND)
+
+    def signup(self, request):
+        data = request.data
+        serializer = UserSerializer(data=data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+            try:
+                sendVerificationEmail(user, user.email)
+            except Exception as e:
+                user.delete()
+                return Response({"message": "There are some problems when sending verification code"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Verification code was sent", "data": serializer.data})
+        except serializers.ValidationError as e:
+            message = ""
+            for key, value in serializer.errors.items():
+                message += f'{value[0]} ({key})'
+                break
+            if not message: message = e.args[0]
+            return Response({'message': message}, status=status.HTTP_400_BAD_REQUEST)
+
+    def verifyEmail(self, request):
+        data = request.data
+        verification_code = data.get('verification_code', None)
+        email = data.get('email', None)
+        user = User.objects.get(email=email)
+        if not verification_code or not email:
+            return Response({'message': 'Verification code and email must be provided'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user:
+            return Response({'message': 'User not found'},status=status.HTTP_404_NOT_FOUND)
+        userProfile = UserProfile.objects.get(user=user)
+        if userProfile.verified:
+            return Response({'message': 'User has been already verified'}, status=status.HTTP_400_BAD_REQUEST)
+        elif userProfile.verification_code == verification_code:
+            userProfile.verified = True
+            userProfile.verification_code = None 
+            userProfile.save()
+            return Response({"message": "User has been verified successfully"})
+        return Response({"message": "Verification code not correct"}, status=status.HTTP_400_BAD_REQUEST)
+        
+            
