@@ -6,3 +6,6 @@ djangorestframework
 djangorestframework-simplejwt
 drf-spectacular
 django-rest-passwordreset
+channels
+daphne
+channels_redis

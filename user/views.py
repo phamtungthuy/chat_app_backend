@@ -84,9 +84,9 @@ class UserViewSet(viewsets.ModelViewSet):
         data = request.data
         verification_code = data.get('verification_code', None)
         email = data.get('email', None)
-        user = User.objects.get(email=email)
         if not verification_code or not email:
             return Response({'message': 'Verification code and email must be provided'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(email=email)
         if not user:
             return Response({'message': 'User not found'},status=status.HTTP_404_NOT_FOUND)
         userProfile = UserProfile.objects.get(user=user)

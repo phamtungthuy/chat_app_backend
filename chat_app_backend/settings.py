@@ -35,6 +35,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,7 +49,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework',
     'user',
-    
+    'chat'
 ]
 
 MIDDLEWARE = [
@@ -80,7 +82,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'chat_app_backend.wsgi.application'
-
+ASGI_APPLICATION = 'chat_app_backend.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -141,6 +143,15 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv("REDIS_HOST"), os.getenv("REDIS_PORT"))],
+        },
+    },
 }
 
 # Internationalization
