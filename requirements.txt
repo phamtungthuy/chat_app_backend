@@ -5,3 +5,4 @@ django-cors-headers
 djangorestframework
 djangorestframework-simplejwt
 drf-spectacular
+django-rest-passwordreset
