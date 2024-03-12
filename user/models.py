@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django_rest_passwordreset.signals import reset_password_token_created
+from django.dispatch import receiver
+from .utils import sendForgetPasswordEmail
 
 # Create your models here.
 class UserProfile(models.Model):
@@ -14,3 +17,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return str(self.user)
+    
+    @receiver(reset_password_token_created)
+    def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+        sendForgetPasswordEmail(reset_password_token)

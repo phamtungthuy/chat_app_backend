@@ -19,3 +19,22 @@ def sendVerificationEmail(user, email):
     userProfile = user.profile
     userProfile.verification_code = verification_code
     userProfile.save()
+    
+def sendForgetPasswordEmail(reset_password_token):
+    user = reset_password_token.user
+    forget_password_token = "{}".format(reset_password_token.key)
+    
+    greetings = "Hi {}!".format(reset_password_token.user.username)
+    email_html_content = "<html><body><p>{greetings}</p> \
+                        <p>Please use this Token for password Reset on SChat website: <b>{token}</b></p></body></html>".format(
+                            greetings=greetings,
+                            token=forget_password_token
+                        )
+
+    mail.send_mail(
+        subject="Forget Password Token",
+        from_email='Wave Chat <wavechat@gmail.com>',
+        message=greetings,
+        recipient_list=[user.email],
+        html_message=email_html_content
+    )
