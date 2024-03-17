@@ -12,6 +12,9 @@ urlpatterns = [
     path('verify/', UserViewSet.as_view({
         'post': 'verifyEmail'
     })),
+    path('verify/resend/', UserViewSet.as_view({
+        'post': 'resendVerification'
+    })),
     path('passwordreset/', 
         CustomResetPasswordRequestTokenViewSet.as_view({
         'post': 'create'     

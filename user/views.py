@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status, serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import UserProfile
-from .utils import sendVerificationEmail
+from .utils import sendVerificationEmail, resendVerificationEmail
 # Create your views here.
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -79,7 +79,19 @@ class UserViewSet(viewsets.ModelViewSet):
                 break
             if not message: message = e.args[0]
             return Response({'message': message}, status=status.HTTP_400_BAD_REQUEST)
-
+    
+    def resendVerification(self, request):
+        data = request.data
+        username = data.get('username')
+        email = data.get('email')
+        try:
+            user = User.objects.get(username=username)
+            if not resendVerificationEmail(user, email):
+                return Response({'message': 'User has been already verified'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Verification code was resent", 'data': data})
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+   
     def verifyEmail(self, request):
         data = request.data
         verification_code = data.get('verification_code', None)

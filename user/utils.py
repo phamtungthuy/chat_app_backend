@@ -19,7 +19,14 @@ def sendVerificationEmail(user, email):
     userProfile = user.profile
     userProfile.verification_code = verification_code
     userProfile.save()
-    
+
+def resendVerificationEmail(user, email):
+    if user.profile.verified: return False
+    user.email = email
+    user.save()
+    sendVerificationEmail(user, email)
+    return True
+
 def sendForgetPasswordEmail(reset_password_token):
     user = reset_password_token.user
     forget_password_token = "{}".format(reset_password_token.key)
