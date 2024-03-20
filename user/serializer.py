@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserProfile, Friend, Notification
 from django.contrib.auth.hashers import make_password
 from django.core.validators import validate_email
 
@@ -22,6 +22,16 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.profile.avatar_url
         except AttributeError as e:
             return default_avatar_url
+    def to_representation(self, instance):
+        data = super(UserSerializer, self).to_representation(instance)
+        data['fullname'] = f'{instance.first_name} {instance.last_name}'
+        return data    
+    
+    def get(self):
+        data = self.data
+        data.pop('email', None)
+        return data
+    
     def create(self, validated_data):
         required_fields = ['username', 'password', 'email', 'first_name', 'last_name']
         if any(key not in validated_data.keys() for key in required_fields):
@@ -67,3 +77,35 @@ class UserSerializer(serializers.ModelSerializer):
         if not value or any(not (c.isalnum() or c == ' ') for c in value):
             raise serializers.ValidationError('Last name must only include alphabet or digit letters')
         return value
+
+class FriendSerializer(serializers.ModelSerializer):
+    friend = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Friend
+        fields = ['friend']
+
+    def get_friend(self, obj):
+        friendSerializer = UserSerializer(obj.friend_with, many=False)
+        data = friendSerializer.get()
+        return data
+    
+    def to_representation(self, instance):
+        data = super(FriendSerializer, self).to_representation(instance)
+        return data['friend']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['sender', 'notification_type', 'status', 'create_at', 'receiver']
+        extra_kwargs = {
+            'receiver': {'write_only': True}
+        }
+
+    def to_representation(self, instance):
+        data = super(NotificationSerializer, self).to_representation(instance)
+        senderSerializer = UserSerializer(instance.sender, many=False)
+        sender = senderSerializer.get()
+        data['sender'] = sender
+        return data

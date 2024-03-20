@@ -3,7 +3,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 import traceback
 from . import async_db
-from .async_db import ACTION
+from .async_db import ACTION, TARGET
 
 class ChatConsumer(AsyncWebsocketConsumer):
     chat_list = []
@@ -12,6 +12,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await self.close(code=3000)
         else:
             self.user = self.scope['user']
+        await self.channel_layer.group_add(f"user_{self.user.id}", self.channel_name)
         await self.channel_layer.group_add("general", self.channel_name)
         await self.accept()
         
@@ -25,9 +26,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             data = await self.dbAsyncHandle(text_data_json)
+            target = text_data_json.get('target', '')
             for key in data.keys():
                 text_data_json[key] = data[key]
-            await self.channel_layer.group_send(
+            if target == TARGET.USER:
+                userId = text_data_json['targetId']
+                await self.channel_layer.group_send(
+                    f'user_{userId}', {"type": "chat.message", "text_data_json": text_data_json}
+                )
+                
+            elif target == TARGET.CHANNEL:
+                channelId = text_data_json['targetId']
+                await self.channel_layer.group_send(
+                    f'group_{channelId}', {"type": "chat.message", "text_data_json": text_data_json}
+                )
+            else:
+                await self.channel_layer.group_send(
                     "general", {"type": "chat.message", "text_data_json": text_data_json}
                 )
         except Exception as e:
@@ -47,9 +61,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def dbAsyncHandle(self, text_data_json):
         action = text_data_json.get('action', None)
         targetId = text_data_json.get('targetId', None)
+        target = text_data_json.get('target', None)
         data = text_data_json.get('data', {})
         
         if action == ACTION.SEND_MESSAGE:
             return await async_db.sendMessage(data)
-        
+        if action == ACTION.FRIEND_REQUEST:
+            return await async_db.sendFriendRequest(self.user, targetId, data)
+        if action == ACTION.FRIEND_ACCEPT:
+            return await async_db.friendAccept(self, targetId, data)
+        if action == ACTION.FRIEND_DENY:
+            return await async_db.friendDeny(self.user, targetId)
         return data
+    

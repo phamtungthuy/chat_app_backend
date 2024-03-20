@@ -4,6 +4,16 @@ from django_rest_passwordreset.signals import reset_password_token_created
 from django.dispatch import receiver
 from .utils import sendForgetPasswordEmail
 
+NOTIFICATION_TYPE = (
+    ("FRIEND_REQUEST", "friend_request"),
+    ("FRIEND_ACCEPT", "friend_accept"),
+)
+
+NOTIFICATION_STATUS = (
+    ("PENDING", 'pending'),
+    ("HANDLED", 'handled')
+)
+
 # Create your models here.
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
@@ -21,3 +31,15 @@ class UserProfile(models.Model):
     @receiver(reset_password_token_created)
     def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
         sendForgetPasswordEmail(reset_password_token)
+
+class Friend(models.Model):
+    user = models.ForeignKey(User, related_name='friends', on_delete=models.CASCADE)
+    friend_with = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class Notification(models.Model):
+    receiver = models.ForeignKey(User, related_name="notifications", on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE)
+    status = models.CharField(max_length=10, default="PENDING", choices=NOTIFICATION_STATUS)
+    create_at = models.DateTimeField(auto_now_add=True)
+    message = models.CharField(null=True, blank=True, max_length=512)
