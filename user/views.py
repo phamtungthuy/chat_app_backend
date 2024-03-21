@@ -10,6 +10,7 @@ from .utils import sendVerificationEmail, resendVerificationEmail
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from drf_spectacular.utils import extend_schema
+from .schema import *
 
 @extend_schema(tags=['User'])
 class UserViewSet(viewsets.ModelViewSet):
@@ -26,12 +27,14 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
-        
+    
+    
     def getAllUsers(self, request):
         users = self.queryset.all()
         serializer = self.serializer_class(users, many=True)
         return Response({"message": "Get all users successfully", "data": serializer.data})
-        
+    
+    @loginSchema
     def login(self, request):
         username = request.data.get('username', None)
         email = request.data.get('email', None)
@@ -60,6 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             return Response({"message": "Username or email not match"}, status=status.HTTP_404_NOT_FOUND)
 
+    @signUpSchema
     def signup(self, request):
         data = request.data
         serializer = UserSerializer(data=data)
@@ -80,6 +84,7 @@ class UserViewSet(viewsets.ModelViewSet):
             if not message: message = e.args[0]
             return Response({'message': message}, status=status.HTTP_400_BAD_REQUEST)
     
+    @resendVerificationSchema
     def resendVerification(self, request):
         data = request.data
         username = data.get('username')
@@ -91,7 +96,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({"message": "Verification code was resent", 'data': data})
         except User.DoesNotExist:
             return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-   
+    @verifyEmailSchema
     def verifyEmail(self, request):
         data = request.data
         verification_code = data.get('verification_code', None)
