@@ -3,12 +3,16 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from user.serializer import NotificationSerializer
 from user.models import Notification, User, Friend
-
+from channel.async_db import *
 class ACTION:
     SEND_MESSAGE = 'SEND_MESSAGE'
     FRIEND_REQUEST = 'friend_request'
     FRIEND_ACCEPT = 'friend_accept'
     FRIEND_DENY = 'friend_deny'
+    CREATE_CHANNEL = 'create_channel'
+    DELETE_CHANNEL = 'delete_channel'
+    GET_MEMBER_LIST = 'get_member_list'
+    JOIN_ALL_CHANNELS = 'join_all_channels'
     
 class TARGET:
     USER = 'user'
@@ -106,3 +110,16 @@ def friendDeny(receiver, senderId):
         }
     else:
         raise Exception("You don't have friend request to deny")
+    
+@database_sync_to_async
+def getAllChannels(user):
+    members = user.members.all()
+    channels = [member.channel for member in members]
+    return channels
+
+@database_sync_to_async
+def isCreator(user, channelId):
+    member = Member.objects.get(user=user, channel_id=channelId)
+    if member.role == "CREATOR":
+        return True
+    return False
