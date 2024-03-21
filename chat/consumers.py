@@ -93,6 +93,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if (await async_db.isCreator(self.user, targetId)):
             if action == ACTION.DELETE_CHANNEL:
                 return await async_db.deleteChannel(targetId)
+            if action == ACTION.REMOVE_MEMBER:
+                return await async_db.removeMember(targetId, data)
         else:
             raise Exception("User is not creator to perform this action")
         return data

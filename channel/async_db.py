@@ -16,6 +16,7 @@ def createChannel(user, data):
         for userId in members:
             Member.objects.create(user_id=userId, channel=channel, role="MEMBER")
         channel_layer = get_channel_layer()
+        serializer = ChannelSerializer(channel, many=False)
         
         for userId in members:
             async_to_sync(channel_layer.group_send)(
@@ -30,7 +31,6 @@ def createChannel(user, data):
                     }
                 }
             )
-        serializer = ChannelSerializer(channel, many=False)
         return {
             "action": "create_channel",
             "target": "channel",
@@ -67,3 +67,15 @@ def getMemberList(user, targetId, data):
     except Channel.DoesNotExist:
         raise Exception('Channel not found!')
     
+@database_sync_to_async
+def removeMember(channelId, data):
+    try:
+        member_id = data.get('member')
+        member = Member.objects.get(pk=member_id, channel_id=channelId)
+        member.delete()
+        return {
+            "message": "Delete member successfully!",
+            "data": ""
+        }
+    except Channel.DoesNotExist:
+        raise Exception('Channel not found!')
