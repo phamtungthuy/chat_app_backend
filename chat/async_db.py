@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from user.serializer import NotificationSerializer
 from user.models import Notification, User, Friend
 from channel.async_db import *
+from message.async_db import *
 class ACTION:
     SEND_MESSAGE = 'SEND_MESSAGE'
     FRIEND_REQUEST = 'friend_request'
