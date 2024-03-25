@@ -13,6 +13,7 @@ class ACTION:
     DELETE_CHANNEL = 'delete_channel'
     GET_MEMBER_LIST = 'get_member_list'
     JOIN_ALL_CHANNELS = 'join_all_channels'
+    REMOVE_MEMBER = 'remove_member'
     
 class TARGET:
     USER = 'user'
