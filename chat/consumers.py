@@ -80,7 +80,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }
         
         if action == ACTION.SEND_MESSAGE:
-            return await async_db.sendMessage(data)
+            return await async_db.sendMessage(self.user, targetId, data)
         if action == ACTION.FRIEND_REQUEST:
             return await async_db.sendFriendRequest(self.user, targetId, data)
         if action == ACTION.FRIEND_ACCEPT:

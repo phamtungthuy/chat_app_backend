@@ -48,9 +48,10 @@ def deleteChannel(targetId):
         channel = Channel.objects.get(pk=targetId)
         channel.delete()
         return {
+            "message": "Your channel is deleted successfully!",
             "data": {
-                "message": "Your channel has been deleted!"
-            }
+            },
+            "status": 200
         }
     except Channel.DoesNotExist:
         raise Exception("Channel not found!")
@@ -63,7 +64,8 @@ def getMemberList(targetId):
         serializer = MemberSerializer(memberList, many=True)
         return {
             "message": "Get member list successfully!",
-            "data": serializer.data
+            "data": serializer.data,
+            "status": 200
         }
     except Channel.DoesNotExist:
         raise Exception('Channel not found!')
@@ -76,7 +78,8 @@ def removeMember(channelId, data):
         member.delete()
         return {
             "message": "Delete member successfully!",
-            "data": {}
+            "data": {},
+            "status": 200
         }
     except Channel.DoesNotExist:
         raise Exception('Channel not found!')
@@ -89,10 +92,11 @@ def addMember(channelId, data):
     serializer = MemberSerializer(data=data)
     if serializer.is_valid(raise_exception=True):
         serializer.save()
-        return {
-            "message": "Add member successfully!",
-            "data": serializer.data
-        }
+    return {
+        "message": "Add member successfully!",
+        "data": serializer.data,
+        "status": 200
+    }
 
 @database_sync_to_async
 def getUserChannels(user):
@@ -108,7 +112,8 @@ def getChannelList(user):
     serializer = ChannelSerializer(channelList, many=True)
     return {
         "message": "Get channels successfully",
-        "data": serializer.data
+        "data": serializer.data,
+        "status": 200
     }
     
 @database_sync_to_async
@@ -122,7 +127,8 @@ def changeCreator(user, data):
     newCreator.save()
     return {
         "message": "Change creator of the channel successfully!",
-        "data": data
+        "data": data,
+        "status": 200
     }
     
 @database_sync_to_async
@@ -135,5 +141,6 @@ def changeTitle(channelId, data):
     data['title'] = channel.title
     return {
         "message": "Change title successfully",
-        "data": data
+        "data": data,
+        "status": 200
     }

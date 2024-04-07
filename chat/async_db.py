@@ -6,7 +6,7 @@ from user.models import Notification, User, Friend, UserProfile
 from channel.async_db import *
 from message.async_db import *
 class ACTION:
-    SEND_MESSAGE = 'SEND_MESSAGE'
+    SEND_MESSAGE = 'send_message'
     FRIEND_REQUEST = 'friend_request'
     FRIEND_ACCEPT = 'friend_accept'
     FRIEND_DENY = 'friend_deny'
@@ -38,9 +38,14 @@ def setOfflineUser(user):
     userProfile.save()
 
 @database_sync_to_async
-def sendMessage(data):
+def sendMessage(user, channelId, data):
+    data['member'] = Member.objects.get(user=user, channel_id=channelId).id
+    data['channel'] = channelId
+    serializer = MessageSerializer(data=data)
+    if (serializer.is_valid(raise_exception=True)):
+        serializer.save()
     return {
-        'data': data,
+        'data': serializer.data,
         'status': 200,
         'message': 'Send message successfully!'
     }
