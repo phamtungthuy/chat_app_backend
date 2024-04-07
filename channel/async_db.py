@@ -110,3 +110,30 @@ def getChannelList(user):
         "message": "Get channels successfully",
         "data": serializer.data
     }
+    
+@database_sync_to_async
+def changeCreator(user, data):
+    memberId = data.get('memberId')
+    newCreator = Member.objects.get(pk=memberId)
+    oldCreator = Member.objects.get(user=user, channel=newCreator.channel)
+    oldCreator.role = "MEMBER"
+    oldCreator.save()
+    newCreator.role = "CREATOR"
+    newCreator.save()
+    return {
+        "message": "Change creator of the channel successfully!",
+        "data": data
+    }
+    
+@database_sync_to_async
+def changeTitle(channelId, data):
+    title = data.get('title')
+    channel = Channel.objects.get(pk=channelId)
+    serializer = ChannelSerializer(channel, data=data, partial=True)
+    if serializer.is_valid(raise_exception=True):
+        channel = serializer.update_title(title)
+    data['title'] = channel.title
+    return {
+        "message": "Change title successfully",
+        "data": data
+    }

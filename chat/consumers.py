@@ -97,13 +97,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await async_db.getChannelList(self.user)
         if action == ACTION.GET_MESSAGE_LIST:
             return await async_db.getMessageList(self.user, targetId)
+        if action == ACTION.CHANGE_TITLE:
+            return await async_db.changeTitle(targetId, data)
+        
         
         if targetId and (await async_db.isCreator(self.user, targetId)):
             if action == ACTION.DELETE_CHANNEL:
                 return await async_db.deleteChannel(targetId)
             if action == ACTION.REMOVE_MEMBER:
                 return await async_db.removeMember(targetId, data)
-
+            if action == ACTION.CHANGE_CREATOR:
+                return await async_db.changeCreator(self.user, data)
+            
         else:
             raise Exception("User is not creator to perform this action")
         return data

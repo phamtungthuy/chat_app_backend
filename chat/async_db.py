@@ -18,6 +18,8 @@ class ACTION:
     ADD_MEMBER = 'add_member'
     GET_CHANNEL_LIST = 'get_channel_list'
     GET_MESSAGE_LIST = 'get_message_list'
+    CHANGE_CREATOR = 'change_creator'
+    CHANGE_TITLE = 'change_title'
     
 class TARGET:
     USER = 'user'
