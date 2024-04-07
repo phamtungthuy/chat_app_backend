@@ -7,6 +7,7 @@ from .serializer import ChannelSerializer, MemberSerializer
 @database_sync_to_async
 def createChannel(user, data):
     members = data.get('members')
+    members = [member for member in members if member != user.id]
     title = data.get('title')
     if len(members) < 2:
         raise Exception('A channel needs at least three members')
@@ -55,7 +56,7 @@ def deleteChannel(targetId):
         raise Exception("Channel not found!")
     
 @database_sync_to_async
-def getMemberList(user, targetId, data):
+def getMemberList(targetId):
     try:
         channel = Channel.objects.get(pk=targetId)
         memberList = channel.members.all()
@@ -70,12 +71,42 @@ def getMemberList(user, targetId, data):
 @database_sync_to_async
 def removeMember(channelId, data):
     try:
-        member_id = data.get('member')
+        member_id = data.get('memberId')
         member = Member.objects.get(pk=member_id, channel_id=channelId)
         member.delete()
         return {
             "message": "Delete member successfully!",
-            "data": ""
+            "data": {}
         }
     except Channel.DoesNotExist:
         raise Exception('Channel not found!')
+    
+@database_sync_to_async
+def addMember(channelId, data):
+    data['channel'] = channelId
+    if (Member.objects.filter(user_id=data['user'], channel=channelId).exists()):
+        raise Exception('This user has already been member')
+    serializer = MemberSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
+        return {
+            "message": "Add member successfully!",
+            "data": serializer.data
+        }
+
+@database_sync_to_async
+def getUserChannels(user):
+    members = user.members.all()
+    channels = [member.channel for member in members]
+    return channels
+
+@database_sync_to_async
+def getChannelList(user):
+    members = user.members.all()
+    print([member.id for member in members])
+    channelList = [member.channel for member in members]
+    serializer = ChannelSerializer(channelList, many=True)
+    return {
+        "message": "Get channels successfully",
+        "data": serializer.data
+    }

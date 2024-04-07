@@ -2,7 +2,7 @@ from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from user.serializer import NotificationSerializer
-from user.models import Notification, User, Friend
+from user.models import Notification, User, Friend, UserProfile
 from channel.async_db import *
 from message.async_db import *
 class ACTION:
@@ -15,11 +15,26 @@ class ACTION:
     GET_MEMBER_LIST = 'get_member_list'
     JOIN_ALL_CHANNELS = 'join_all_channels'
     REMOVE_MEMBER = 'remove_member'
+    ADD_MEMBER = 'add_member'
+    GET_CHANNEL_LIST = 'get_channel_list'
+    GET_MESSAGE_LIST = 'get_message_list'
     
 class TARGET:
     USER = 'user'
     CHANNEL = 'channel'
-    
+
+@database_sync_to_async
+def setOnlineUser(user):
+    userProfile = UserProfile.objects.get(user=user)
+    userProfile.online = True
+    userProfile.save()
+
+@database_sync_to_async
+def setOfflineUser(user):
+    userProfile = UserProfile.objects.get(user=user)
+    userProfile.online = False
+    userProfile.save()
+
 @database_sync_to_async
 def sendMessage(data):
     return {
@@ -118,6 +133,8 @@ def getAllChannels(user):
     members = user.members.all()
     channels = [member.channel for member in members]
     return channels
+
+
 
 @database_sync_to_async
 def isCreator(user, channelId):

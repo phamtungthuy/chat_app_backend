@@ -4,14 +4,19 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import traceback
 from . import async_db
 from .async_db import ACTION, TARGET
+from channels.exceptions import StopConsumer
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    chat_list = []
     async def connect(self):
         if self.scope["user"].is_anonymous:
             return await self.close(code=3000)
         else:
             self.user = self.scope['user']
+        await async_db.setOnlineUser(self.user)
+        channels = await async_db.getUserChannels(self.user)
+        for channel in channels:
+            group_name = f'group_{channel.id}'
+            await self.channel_layer.group_add(group_name, self.channel_name)
         await self.channel_layer.group_add(f"user_{self.user.id}", self.channel_name)
         await self.channel_layer.group_add("general", self.channel_name)
         await self.accept()
@@ -19,35 +24,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
     async def disconnect(self, close_code):
         # Leave room group
-        for chat_id in self.chat_list:
-            await self.channel_layer.group_discard(chat_id, self.channel_name)
-
+        if close_code == 3000:
+            return
+        await async_db.setOfflineUser(self.user)
+        raise StopConsumer()
+        
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
             data = await self.dbAsyncHandle(text_data_json)
-            target = text_data_json.get('target', '')
+            target = text_data_json.get('target', 'user')
+            targetId = text_data_json.get('targetId', self.user.id)
             for key in data.keys():
                 text_data_json[key] = data[key]
             if target == TARGET.USER:
-                userId = text_data_json['targetId']
                 await self.channel_layer.group_send(
-                    f'user_{userId}', {"type": "chat.message", "text_data_json": text_data_json}
+                    f'user_{targetId}', {"type": "chat.message", "text_data_json": text_data_json}
                 )
                 
             elif target == TARGET.CHANNEL:
-                channelId = text_data_json['targetId']
                 await self.channel_layer.group_send(
-                    f'group_{channelId}', {"type": "chat.message", "text_data_json": text_data_json}
+                    f'group_{targetId}', {"type": "chat.message", "text_data_json": text_data_json}
                 )
-            else:
-                await self.channel_layer.group_send(
-                    "general", {"type": "chat.message", "text_data_json": text_data_json}
-                )
+
         except Exception as e:
-            traceback.print_exc()
             text_data_json["data"] = {}
-            text_data_json["message"] = repr(e)
+            text_data_json["message"] = str(e)
             text_data_json["status"] = 400
             text_data = json.dumps(text_data_json, ensure_ascii=False)
             await self.send(text_data=text_data)
@@ -88,13 +90,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if action == ACTION.CREATE_CHANNEL:
             return await async_db.createChannel(self.user, data)
         if action == ACTION.GET_MEMBER_LIST:
-            return await async_db.getMemberList(self.user, targetId, data)
+            return await async_db.getMemberList(targetId)
+        if action == ACTION.ADD_MEMBER:
+            return await async_db.addMember(targetId, data)
+        if action == ACTION.GET_CHANNEL_LIST:
+            return await async_db.getChannelList(self.user)
+        if action == ACTION.GET_MESSAGE_LIST:
+            return await async_db.getMessageList(self.user, targetId)
         
-        if (await async_db.isCreator(self.user, targetId)):
+        if targetId and (await async_db.isCreator(self.user, targetId)):
             if action == ACTION.DELETE_CHANNEL:
                 return await async_db.deleteChannel(targetId)
             if action == ACTION.REMOVE_MEMBER:
                 return await async_db.removeMember(targetId, data)
+
         else:
             raise Exception("User is not creator to perform this action")
         return data
