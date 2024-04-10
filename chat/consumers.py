@@ -9,6 +9,7 @@ from channels.exceptions import StopConsumer
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         if self.scope["user"].is_anonymous:
+            await self.accept()
             return await self.close(code=3000)
         else:
             self.user = self.scope['user']
