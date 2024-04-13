@@ -100,7 +100,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await async_db.getMessageList(self.user, targetId)
         if action == ACTION.CHANGE_TITLE:
             return await async_db.changeTitle(targetId, data)
-        
+        if action == ACTION.GET_FRIEND_LIST:
+            return await async_db.getFriendList(self.user)
+        if action == ACTION.GET_PROFILE:
+            return await async_db.getSelfProfile(self.user)
         
         if targetId and (await async_db.isCreator(self.user, targetId)):
             if action == ACTION.DELETE_CHANNEL:

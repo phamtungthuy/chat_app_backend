@@ -1,7 +1,7 @@
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from user.serializer import NotificationSerializer
+from user.serializer import NotificationSerializer, FriendSerializer, UserProfileSerializer
 from user.models import Notification, User, Friend, UserProfile
 from channel.async_db import *
 from message.async_db import *
@@ -20,6 +20,8 @@ class ACTION:
     GET_MESSAGE_LIST = 'get_message_list'
     CHANGE_CREATOR = 'change_creator'
     CHANGE_TITLE = 'change_title'
+    GET_FRIEND_LIST = 'get_friend_list'
+    GET_PROFILE = 'get_profile'
     
 class TARGET:
     USER = 'user'
@@ -149,3 +151,23 @@ def isCreator(user, channelId):
     if member.role == "CREATOR":
         return True
     return False
+
+@database_sync_to_async
+def getFriendList(user):
+    friendList = Friend.objects.filter(user=user)
+    serializer = FriendSerializer(friendList, many=True)
+    return {
+        "message": "Get friend list successfully!",
+        "status": 200,
+        "data": serializer.data
+    }
+    
+@database_sync_to_async
+def getSelfProfile(user):
+    userProfile = UserProfile.objects.get(user=user)
+    serializer = UserProfileSerializer(userProfile, many=False)
+    return {
+        "message": "Get self profile successfully!",
+        "status": 200,
+        "data": serializer.data
+    }

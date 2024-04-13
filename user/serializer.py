@@ -78,6 +78,38 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Last name must only include alphabet or digit letters')
         return value
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'bio', 'avatar_url', 'phone_number', 'address', 'online']
+    
+    def get_user(self, obj):
+        serializer = UserSerializer(obj.user, many=False)
+        userData = serializer.get()
+        userData.pop('avatar_url', None)
+        return userData
+
+    def update(self, instance, validated_data):
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.address = validated_data.get('address', instance.address)
+        instance.save()
+        return instance
+
+    def getFriendProfile(self):
+        data = self.data
+        data.pop("address", None)
+        return data
+
+    def getStrangerProfile(self):
+        data = self.data
+        data.pop('phone_number', None)
+        data.pop('address', None)
+        data.pop('online', None)
+        return data
+
 class FriendSerializer(serializers.ModelSerializer):
     friend = serializers.SerializerMethodField()
 
