@@ -23,7 +23,7 @@ def send_message(user, targetId, data):
 def getMessageList(user, targetId):
     try:
         channel = Channel.objects.get(pk=targetId)
-        messageList = Message.objects.filter(member__user=user, channel=channel)
+        messageList = channel.messages.all()
         serializer = MessageSerializer(messageList, many=True)
         return {
             "message": "Get all messages successfully!",
