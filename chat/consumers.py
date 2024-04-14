@@ -96,6 +96,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await async_db.addMember(targetId, data)
         if action == ACTION.GET_CHANNEL_LIST:
             return await async_db.getChannelList(self.user)
+        if action == ACTION.GET_CHAT_LIST:
+            return await async_db.getChatList(self.user)
+        if action == ACTION.GET_COMMUNITY_LIST:
+            return await async_db.getCommunityList(self.user)
         if action == ACTION.GET_MESSAGE_LIST:
             return await async_db.getMessageList(self.user, targetId)
         if action == ACTION.CHANGE_TITLE:

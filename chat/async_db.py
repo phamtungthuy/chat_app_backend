@@ -22,6 +22,8 @@ class ACTION:
     CHANGE_TITLE = 'change_title'
     GET_FRIEND_LIST = 'get_friend_list'
     GET_PROFILE = 'get_profile'
+    GET_CHAT_LIST = 'get_chat_list'
+    GET_COMMUNITY_LIST = 'get_community_list'
     
 class TARGET:
     USER = 'user'
@@ -91,6 +93,33 @@ def friendAccept(consumer, receiver, data):
     
     Friend.objects.create(user=user, friend_with=friend_with)
     Friend.objects.create(user=friend_with, friend_with=user)
+    
+    for channel in Channel.objects.all():
+        members = channel.members.all()
+        if members.count() == 2:
+            if ((members[0].user == user and members[1].user.id == receiver)
+            or (members[1].user == user and members[0].user.id == receiver)):
+                if not channel.is_active:
+                    channel.is_active = True
+                    channel.save()
+                    data.update({
+                        "receiver": receiver,
+                        "sender": user.id,
+                        "notification_type": "FRIEND_ACCEPT",
+                        "status": "HANDLED"
+                    })
+                    serializer = NotificationSerializer(data=data)
+                    if (serializer.is_valid(raise_exception=True)):
+                        serializer.save()
+                        return serializer.data
+                    
+    channel = Channel.objects.create(
+        title=f'{user.username} || {friend_with.username}',
+        avatar_url=user.profile.avatar_url,
+        type="CHAT"
+    )
+    Member.objects.create(user=user, channel=channel)
+    Member.objects.create(user=friend_with, channel=channel)               
     
     requestToAccept = Notification.objects.filter(sender_id=receiver,
         receiver=user,
