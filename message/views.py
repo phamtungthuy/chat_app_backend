@@ -57,7 +57,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 text_data_json = {
-                    "action": "create_message",
+                    "action": "send_message",
                     "target": "channel",
                     "targetId": channelId,
                     "data": serializer.data
