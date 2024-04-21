@@ -25,6 +25,7 @@ urlpatterns = [
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('api/user/', include('user.urls')),
-    path('call/', include('call.urls'))
+    path('call/', include('call.urls')),
+    path('api/message/', include('message.urls')),
     
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
