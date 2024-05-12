@@ -49,6 +49,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
 
         except Exception as e:
+            print(str(e))
             text_data_json["data"] = {}
             text_data_json["message"] = str(e)
             text_data_json["status"] = 400
@@ -108,6 +109,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await async_db.getFriendList(self.user)
         if action == ACTION.GET_PROFILE:
             return await async_db.getSelfProfile(self.user)
+        if action == ACTION.UPDATE_EXPO_TOKEN:
+            return await async_db.updateExpoToken(self.user, data)
         
         creator_actions = [ACTION.DELETE_CHANNEL, ACTION.REMOVE_MEMBER, ACTION.CHANGE_CREATOR]
         if targetId in creator_actions:

@@ -25,7 +25,19 @@ class ChannelSerializer(serializers.ModelSerializer):
         self.instance.save()
         return self.instance
 
-
+    def to_representation(self, instance):
+        data = super(ChannelSerializer, self).to_representation(instance)
+        if data["type"] == "CHAT" and self.context:
+            username = self.context.get("username", None)
+            if username:
+                title_list = data["title"].split("||")
+                for title in title_list:
+                    title = title.strip()
+                    if username == title:
+                        continue
+                    data["title"] = title.strip()
+        return data
+    
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member

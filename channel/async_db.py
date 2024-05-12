@@ -119,7 +119,9 @@ def getChannelList(user):
 def getChatList(user):
     members = user.members.all()
     channelList = [member.channel for member in members if member.channel.type=="CHAT"]
-    serializer = ChannelSerializer(channelList, many=True)
+    serializer = ChannelSerializer(channelList, context={
+            "username": user.username
+        }, many=True)
     return {
         "message": "Get chats successfully",
         "data": serializer.data,

@@ -24,7 +24,8 @@ class UserProfile(models.Model):
     phone_number = models.CharField(null=True, blank=True, max_length=15)
     address = models.CharField(null=True, blank=True, max_length=100)
     online = models.BooleanField(default=False)
-
+    expo_token = models.CharField(null=True, blank=True, max_length=128)
+    
     def __str__(self):
         return str(self.user)
     

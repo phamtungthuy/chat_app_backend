@@ -2,30 +2,30 @@ version: '3.8'
 
 services:
   backend:
-    image: chat
+    image: chat_app_backend
     build:
       dockerfile: Dockerfile
     ports:
-      - 8001:8000
+      - 8000:8000
     volumes:
       - ./:/app
-    # depends_on:
-    #   - database
-    #   - redis
-  # database:
-  #   image: mysql:8.0
-  #   environment:
-  #     MYSQL_DATABASE: main
-  #     MYSQL_ROOT_USER: root
-  #     MYSQL_PASSWORD: root
-  #     MYSQL_ROOT_PASSWORD: root
-  #   volumes:
-  #     - ./database:/var/lib/mysql
-  #   ports:
-  #     - 33066:3306
-  # redis:
-  #   image: redis:7.2-alpine
-  #   volumes:
-  #    - ./redis.conf:/usr/local/etc/redis/redis.conf
-  #   ports:
-  #    - 6379:6379
+    depends_on:
+      - database
+      - redis
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: main
+      MYSQL_ROOT_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./database:/var/lib/mysql
+    ports:
+      - 33066:3306
+  redis:
+    image: redis:7.2-alpine
+    volumes:
+     - ./redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+     - 6379:6379

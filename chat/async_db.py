@@ -5,6 +5,8 @@ from user.serializer import NotificationSerializer, FriendSerializer, UserProfil
 from user.models import Notification, User, Friend, UserProfile
 from channel.async_db import *
 from message.async_db import *
+import requests
+
 class ACTION:
     SEND_MESSAGE = 'send_message'
     FRIEND_REQUEST = 'friend_request'
@@ -24,11 +26,21 @@ class ACTION:
     GET_PROFILE = 'get_profile'
     GET_CHAT_LIST = 'get_chat_list'
     GET_COMMUNITY_LIST = 'get_community_list'
+    UPDATE_EXPO_TOKEN = 'update_expo_token'
     
 class TARGET:
     USER = 'user'
     CHANNEL = 'channel'
 
+@database_sync_to_async
+def updateExpoToken(user, data):
+    userProfile = UserProfile.objects.get(user=user)
+    expo_token =  data.get("expo_token", None)
+    if expo_token:
+        userProfile.expo_token = expo_token
+        userProfile.save()
+    else:
+        raise Exception("Expo token not found!")
 @database_sync_to_async
 def setOnlineUser(user):
     userProfile = UserProfile.objects.get(user=user)
@@ -45,6 +57,21 @@ def setOfflineUser(user):
 def sendMessage(user, channelId, data):
     data['member'] = Member.objects.get(user=user, channel_id=channelId).id
     data['channel'] = channelId
+    member_list = Member.objects.filter(channel_id=channelId)
+    for member in member_list:
+        profile = member.user.profile
+        if profile.expo_token:
+            expo_url = "https://exp.host/--/api/v2/push/send"
+            expo_headers = {
+                "Content-Type": "application/json",
+            }
+            expo_data = {
+                "to": profile.expo_token,
+                "title": f"Tin nhắn từ {user.username}",
+                "body": data["content"]
+            }
+            requests.post(expo_url, headers=expo_headers, json=expo_data)
+
     serializer = MessageSerializer(data=data)
     if (serializer.is_valid(raise_exception=True)):
         serializer.save()
