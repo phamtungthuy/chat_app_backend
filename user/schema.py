@@ -52,6 +52,12 @@ changePasswordSchema = extend_schema(
 )
 
 
-
-
-    
+getFriendListSchema = extend_schema(
+    summary = "Get friend list of current user",
+    description="You need authentication token of current user to get friend list",
+    responses = {
+        200: OpenApiResponse(response=SuccessGetFriendListSerializer, description="Get friend list successfully"),
+        401: OpenApiResponse(response=GeneralMessageSerializer, description="You need provide authentication token to make this action"),
+        
+    }
+)

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserViewSet
+from .views import UserViewSet, FriendViewSet
 from .passwordToken import *
 
 urlpatterns = [
@@ -26,5 +26,8 @@ urlpatterns = [
     path('passwordreset/validate/', 
         CustomResetPasswordValidateTokenViewSet.as_view({
         'post': 'create'     
-    }))
+    })),
+    path('friends/', FriendViewSet.as_view({
+        'get': 'getFriendList',
+    })),
 ]

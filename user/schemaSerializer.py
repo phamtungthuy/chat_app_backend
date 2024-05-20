@@ -45,3 +45,15 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class ChangeEmailSerializer(serializers.Serializer):
     newEmail = serializers.EmailField()
+
+class UserWithoutEmailSerializer(UserResponseSerializer):
+    fullname = serializers.CharField()
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'avatar_url', 
+                  'first_name', 'last_name', 'fullname']
+        
+
+class SuccessGetFriendListSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    data = UserWithoutEmailSerializer(many=True)

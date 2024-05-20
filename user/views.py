@@ -116,4 +116,24 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({"message": "User has been verified successfully"})
         return Response({"message": "Verification code not correct"}, status=status.HTTP_400_BAD_REQUEST)
         
+@extend_schema(tags=['Friend'])
+class FriendViewSet(viewsets.ViewSet):
+    query_set = Friend.objects.all()
+    serializer_class = FriendSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        admin_actions = ['getFriendListOfAUser']
+        if self.action in admin_actions:
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [IsAuthenticated]
             
+        return [permission() for permission in permission_classes]
+    
+    @getFriendListSchema
+    def getFriendList(self, request):
+        user = request.user
+        friendList = user.friends.all()
+        serializer = self.serializer_class(friendList, many=True)
+        return Response({'message': 'Get friend list successfully', 'data': serializer.data})

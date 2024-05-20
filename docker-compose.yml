@@ -10,8 +10,10 @@ services:
     volumes:
       - ./:/app
     depends_on:
-      - database
-      - redis
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   database:
     image: mysql:8.0
     environment:
@@ -23,9 +25,19 @@ services:
       - ./database:/var/lib/mysql
     ports:
       - 33066:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-p${root}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
   redis:
     image: redis:7.2-alpine
     volumes:
      - ./redis.conf:/usr/local/etc/redis/redis.conf
     ports:
      - 6379:6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
