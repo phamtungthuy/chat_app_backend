@@ -1,5 +1,6 @@
 from django.db import models
 from channel.models import Channel, Member
+import datetime
 
 MESSAGE_TYPE = (
     ("TEXT", "text"),
@@ -20,6 +21,12 @@ class Message(models.Model):
 
     def __str__(self):
         return f'{self.channel.id}_{self.content}'
+    
+    def save(self, *args, **kwargs):
+        channel = Channel.objects.get(pk=self.channel.id)
+        channel.last_updated = datetime.datetime.now()
+        channel.save()
+        super().save(*args, **kwargs)
 
 class Emoji(models.Model):
     name = models.CharField(max_length=20)

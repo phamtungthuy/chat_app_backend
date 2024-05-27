@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Channel, Member
 from user.serializer import UserSerializer
-
+from message.models import Message
 class ChannelSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
     # last_message = serializers.SerializerMethodField()
@@ -36,6 +36,18 @@ class ChannelSerializer(serializers.ModelSerializer):
                     if username == title:
                         continue
                     data["title"] = title.strip()
+            member = Member.objects.get(channel_id=data["id"], user__username=username)
+            data["channel_title"] = [member.user.first_name.strip() + " " + member.user.last_name.strip()]
+        if data["type"] == "COMMUNITY":
+            data["channel_title"] = []
+            memberList = Member.objects.filter(channel_id=data["id"])[:3]
+            for member in memberList:
+                data["channel_title"].append(member.user.first_name.strip() + " " + member.user.last_name.strip())
+                
+        last_message = Message.objects.filter(channel_id=data["id"]).order_by("-create_at").first()
+        if last_message:
+            data["last_message"] = last_message.content
+        else: data["last_message"] = ""
         return data
     
 class MemberSerializer(serializers.ModelSerializer):
