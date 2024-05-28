@@ -18,7 +18,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     
     def get_permission(self):
-        admin_actions = []
+        admin_actions = ["getAllUsers"]
         authenicate_actions = []
         if self.action in authenicate_actions:
             permission_classes = [IsAuthenticated]
@@ -28,11 +28,25 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
     
-    
+    @getAllUsersSchema
     def getAllUsers(self, request):
         users = self.queryset.all()
         serializer = self.serializer_class(users, many=True)
-        return Response({"message": "Get all users successfully", "data": serializer.data})
+        users = serializer.data
+        data = []
+        friendList = Friend.objects.filter(user=request.user)
+        friendIds = []
+        for friend in friendList:
+            friendIds.append(friend.user.id)
+        for user in users:
+            user_object = dict(user)
+            if user_object["id"] == request.user.id:
+                continue
+            user_object["is_friend"] = False
+            if user_object["id"] in friendIds:
+                user_object["is_friend"] = True
+            data.append(user_object) 
+        return Response({"message": "Get all users successfully", "data": data})
     
     @loginSchema
     def login(self, request):
@@ -115,7 +129,8 @@ class UserViewSet(viewsets.ModelViewSet):
             userProfile.save()
             return Response({"message": "User has been verified successfully"})
         return Response({"message": "Verification code not correct"}, status=status.HTTP_400_BAD_REQUEST)
-        
+    
+    
 @extend_schema(tags=['Friend'])
 class FriendViewSet(viewsets.ViewSet):
     query_set = Friend.objects.all()

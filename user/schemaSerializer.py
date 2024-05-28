@@ -57,3 +57,7 @@ class UserWithoutEmailSerializer(UserResponseSerializer):
 class SuccessGetFriendListSerializer(serializers.Serializer):
     message = serializers.CharField()
     data = UserWithoutEmailSerializer(many=True)
+    
+class SuccessGetAllUsersSerializer(serializers.Serializer):
+    message =serializers.CharField()
+    data = UserResponseSerializer(many=True)

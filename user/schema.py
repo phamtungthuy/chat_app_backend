@@ -61,3 +61,13 @@ getFriendListSchema = extend_schema(
         
     }
 )
+
+getAllUsersSchema = extend_schema(
+    summary="Get All Users if have permission",
+    description="If you want to get all users, you need permission, normal users can not get information of all users",
+    responses = {
+        200: OpenApiResponse(response=SuccessGetAllUsersSerializer, description="Get all users successfully"),
+        401: OpenApiResponse(response=GeneralMessageSerializer, description="You need to be authorized before making this action"),
+        403: OpenApiResponse(response=GeneralMessageSerializer, description="You don't have permission to get all users")
+    }
+)

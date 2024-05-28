@@ -30,4 +30,7 @@ urlpatterns = [
     path('friends/', FriendViewSet.as_view({
         'get': 'getFriendList',
     })),
+    path('all/', UserViewSet.as_view({
+        'get': 'getAllUsers',
+    })),
 ]
