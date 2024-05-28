@@ -34,10 +34,11 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(users, many=True)
         users = serializer.data
         data = []
-        friendList = Friend.objects.filter(user=request.user)
+        friendList = Friend.objects.filter(friend_with=request.user)
         friendIds = []
         for friend in friendList:
             friendIds.append(friend.user.id)
+        print(friendIds)
         for user in users:
             user_object = dict(user)
             if user_object["id"] == request.user.id:
