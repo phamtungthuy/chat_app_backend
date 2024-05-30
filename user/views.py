@@ -17,9 +17,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     
-    def get_permission(self):
-        admin_actions = ["getAllUsers"]
-        authenicate_actions = []
+    def get_permissions(self):
+        admin_actions = []
+        authenicate_actions = ["getAllUsers"]
         if self.action in authenicate_actions:
             permission_classes = [IsAuthenticated]
         elif self.action in admin_actions:

@@ -27,5 +27,6 @@ urlpatterns = [
     path('api/user/', include('user.urls')),
     path('call/', include('call.urls')),
     path('api/message/', include('message.urls')),
+    path('api/channel/', include('channel.urls'))
     
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

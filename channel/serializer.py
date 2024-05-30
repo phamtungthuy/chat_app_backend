@@ -43,7 +43,10 @@ class ChannelSerializer(serializers.ModelSerializer):
             memberList = Member.objects.filter(channel_id=data["id"])[:3]
             for member in memberList:
                 data["channel_title"].append(member.user.first_name.strip() + " " + member.user.last_name.strip())
-                
+        memberList = Member.objects.filter(channel_id=data["id"])
+        data["user_list"] = []
+        for member in memberList:
+            data["user_list"].append(member.user.id)
         last_message = Message.objects.filter(channel_id=data["id"]).order_by("-create_at").first()
         if last_message:
             data["last_message"] = last_message.content
