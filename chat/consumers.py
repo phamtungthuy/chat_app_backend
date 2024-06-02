@@ -111,6 +111,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await async_db.getSelfProfile(self.user)
         if action == ACTION.UPDATE_EXPO_TOKEN:
             return await async_db.updateExpoToken(self.user, data)
+        if action == ACTION.SEND_REACTION:
+            return await async_db.sendReaction(data)
         
         creator_actions = [ACTION.DELETE_CHANNEL, ACTION.REMOVE_MEMBER, ACTION.CHANGE_CREATOR]
         if targetId in creator_actions:

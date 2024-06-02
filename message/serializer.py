@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Message, Emoji, Reaction
 import channel.serializer
-
+import json
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,6 +28,8 @@ class MessageSerializer(serializers.ModelSerializer):
                     "latitude": float(locationArr[0]),
                     "longitude": float(locationArr[1])
                 }
+        if data["reactions"] != "":
+            data["reactions"] = json.loads(data["reactions"])
         return data
 
 

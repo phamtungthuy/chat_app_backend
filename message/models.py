@@ -16,6 +16,7 @@ class Message(models.Model):
     create_at = models.DateTimeField(auto_now_add=True)
     image = models.TextField(blank=True, null=True)
     location = models.TextField(blank=True, null=True)
+    reactions = models.TextField(blank=True, default="")
     class Meta:
         ordering = ['-id']
 

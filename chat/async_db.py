@@ -6,7 +6,7 @@ from user.models import Notification, User, Friend, UserProfile
 from channel.async_db import *
 from message.async_db import *
 import requests
-
+import json
 class ACTION:
     SEND_MESSAGE = 'send_message'
     FRIEND_REQUEST = 'friend_request'
@@ -27,6 +27,7 @@ class ACTION:
     GET_CHAT_LIST = 'get_chat_list'
     GET_COMMUNITY_LIST = 'get_community_list'
     UPDATE_EXPO_TOKEN = 'update_expo_token'
+    SEND_REACTION = 'send_reaction'
     
 class TARGET:
     USER = 'user'
@@ -226,4 +227,25 @@ def getSelfProfile(user):
         "message": "Get self profile successfully!",
         "status": 200,
         "data": serializer.data
+    }
+    
+@database_sync_to_async
+def sendReaction(data):
+    message = Message.objects.get(id=data["message_id"])
+    reactions = message.reactions
+    if reactions == "":
+        reactions = {}
+        reactions["value"] = []
+        reactions["total"] = 0
+    else: reactions = json.loads(reactions)
+    if data["value"] not in reactions["value"]:
+        reactions["value"].append(data["value"])
+    reactions["total"] += 1
+    message.reactions = json.dumps(reactions, ensure_ascii=False)
+    data["reactions"] = reactions
+    message.save()
+    return {
+        "message": "Send reaction successfully!",
+        "status": 200,
+        "data": data
     }
