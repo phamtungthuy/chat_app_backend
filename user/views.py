@@ -4,7 +4,7 @@ from .serializer import UserSerializer
 from rest_framework.response import Response
 from rest_framework import status, serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import UserProfile
+from .models import UserProfile, Notification
 from .utils import sendVerificationEmail, resendVerificationEmail
 # Create your views here.
 from rest_framework import viewsets
@@ -44,6 +44,15 @@ class UserViewSet(viewsets.ModelViewSet):
             if user_object["id"] == request.user.id:
                 continue
             user_object["is_friend"] = False
+            user_object["friend_request_pending"] = False
+            try:
+                notification = Notification.objects.get(receiver_id=user_object["id"], status="PENDING")
+                if notification:
+                    user_object["friend_request_pending"] = True
+                else: user_object["friend_request_pending"] = False
+            except Exception as e:
+                print(str(e))
+                user_object["friend_request_pending"] = False
             if user_object["id"] in friendIds:
                 user_object["is_friend"] = True
             data.append(user_object) 
