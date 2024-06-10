@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserViewSet, FriendViewSet
+from .views import UserViewSet, FriendViewSet, NotificationViewSet
 from .passwordToken import *
 
 urlpatterns = [
@@ -33,4 +33,7 @@ urlpatterns = [
     path('all/', UserViewSet.as_view({
         'get': 'getAllUsers',
     })),
+    path('notifications', NotificationViewSet.as_view({
+        'get': 'getFriendRequestList'
+    }))
 ]

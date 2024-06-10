@@ -47,6 +47,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_send(
                     f'group_{targetId}', {"type": "chat.message", "text_data_json": text_data_json}
                 )
+            elif target == TARGET.BOTH:
+                await self.channel_layer.group_send(
+                    f'user_{targetId}', {"type": "chat.message", "text_data_json": text_data_json}
+                )
+                await self.channel_layer.group_send(
+                    f'user_{self.user.id}', {"type": "chat.message", "text_data_json": text_data_json}
+                )
 
         except Exception as e:
             print(str(e))
@@ -89,6 +96,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return await async_db.friendAccept(self, targetId, data)
         if action == ACTION.FRIEND_DENY:
             return await async_db.friendDeny(self.user, targetId)
+        if action == ACTION.CANCEL_FRIEND_REQUEST:
+            # return await async_db.
+            return await async_db.cancelFriendRequest(self.user, targetId)
+        if action == ACTION.DELETE_FRIEND:
+            return await async_db.deleteFriend(self.user, targetId)
         if action == ACTION.CREATE_CHANNEL:
             return await async_db.createChannel(self.user, data)
         if action == ACTION.GET_MEMBER_LIST:

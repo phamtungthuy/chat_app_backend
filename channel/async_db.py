@@ -107,7 +107,7 @@ def getUserChannels(user):
 @database_sync_to_async
 def getChannelList(user):
     members = user.members.all()
-    channelList = [member.channel for member in members]
+    channelList = [member.channel for member in members if member.channel.is_active]
     serializer = ChannelSerializer(channelList, many=True)
     return {
         "message": "Get channels successfully",
@@ -118,7 +118,7 @@ def getChannelList(user):
 @database_sync_to_async
 def getChatList(user):
     members = user.members.all()
-    channelList = [member.channel for member in members if member.channel.type=="CHAT"]
+    channelList = [member.channel for member in members if member.channel.type=="CHAT" and member.channel.is_active]
     serializer = ChannelSerializer(channelList, context={
             "username": user.username
         }, many=True)
@@ -131,7 +131,7 @@ def getChatList(user):
 @database_sync_to_async
 def getCommunityList(user):
     members = user.members.all()
-    channelList = [member.channel for member in members if member.channel.type=="COMMUNITY"]
+    channelList = [member.channel for member in members if member.channel.type=="COMMUNITY" and member.channel.is_active]
     serializer = ChannelSerializer(channelList, many=True)
     return {
         "message": "Get chats successfully",

@@ -7,6 +7,7 @@ from channel.async_db import *
 from message.async_db import *
 import requests
 import json
+from django.db.models import Q
 class ACTION:
     SEND_MESSAGE = 'send_message'
     FRIEND_REQUEST = 'friend_request'
@@ -28,10 +29,13 @@ class ACTION:
     GET_COMMUNITY_LIST = 'get_community_list'
     UPDATE_EXPO_TOKEN = 'update_expo_token'
     SEND_REACTION = 'send_reaction'
+    CANCEL_FRIEND_REQUEST = 'cancel_friend_request'
+    DELETE_FRIEND = 'delete_friend'
     
 class TARGET:
     USER = 'user'
     CHANNEL = 'channel'
+    BOTH = 'both'
 
 @database_sync_to_async
 def updateExpoToken(user, data):
@@ -194,6 +198,48 @@ def friendDeny(receiver, senderId):
     else:
         raise Exception("You don't have friend request to deny")
     
+@database_sync_to_async
+def cancelFriendRequest(user, targetId):
+    try:
+        notification = Notification.objects.get(sender=user, receiver_id=targetId,
+                                                status='PENDING',
+                                                notification_type="friend_request")
+        notification.delete()
+        return {
+            "status":200,
+            "message": "Cancel friend request successfully",
+            "data": {}
+        }
+    except Notification.DoesNotExist:
+        raise Exception("Does not exist notification")
+    
+@database_sync_to_async
+def deleteFriend(user, friendId):
+    try:
+        friend = Friend.objects.filter(Q(user=user, friend_with=friendId) | Q(user_id=friendId, friend_with=user))
+        friend.delete()
+        targetChannel = None
+        for channel in Channel.objects.all():
+            members = channel.members.all()
+            if members.count() == 2 and channel.type == "CHAT":
+                if ((members[0].user == user and members[1].user.id == friendId)
+                    or (members[1].user == user and members[0].user.id == friendId)):
+                        targetChannel = channel
+                        break
+        targetChannel.is_active = False
+        targetChannel.save()
+        return {
+            "message": "Delete friend successfully!",
+            "data": {},
+            "status": 200
+        }
+    except Friend.DoesNotExist:
+        return {
+            "message": "Friend not found",
+            "status": 404,
+            "data": {}
+        }
+
 @database_sync_to_async
 def getAllChannels(user):
     members = user.members.all()

@@ -162,3 +162,15 @@ class FriendViewSet(viewsets.ViewSet):
         friendList = user.friends.all()
         serializer = self.serializer_class(friendList, many=True)
         return Response({'message': 'Get friend list successfully', 'data': serializer.data})
+
+@extend_schema(tags=["Notification"])
+class NotificationViewSet(viewsets.ViewSet):
+    query_set = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def getFriendRequestList(self, request):
+        user = request.user
+        friendRequestList = Notification.objects.filter(receiver=user, status="PENDING")
+        serializer = self.serializer_class(friendRequestList, many=True)
+        return Response({'message': 'Get friend request list successfully', 'data': serializer.data})
