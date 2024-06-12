@@ -12,7 +12,7 @@ class Message(models.Model):
     channel = models.ForeignKey(Channel, related_name='messages', on_delete=models.CASCADE)
     message_type = models.CharField(max_length=10, choices=MESSAGE_TYPE, default="TEXT")
     content = models.TextField(blank=True)
-    reply = models.ForeignKey("Message", null=True, blank=True, on_delete=models.DO_NOTHING)
+    reply = models.ForeignKey("Message", null=True, blank=True, on_delete=models.CASCADE)
     create_at = models.DateTimeField(auto_now_add=True)
     image = models.TextField(blank=True, null=True)
     location = models.TextField(blank=True, null=True)

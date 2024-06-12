@@ -99,8 +99,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if action == ACTION.CANCEL_FRIEND_REQUEST:
             # return await async_db.
             return await async_db.cancelFriendRequest(self.user, targetId)
+        if action == ACTION.VIDEO_CALL:
+            await async_db.video_call(self.user, target, targetId)
         if action == ACTION.DELETE_FRIEND:
             return await async_db.deleteFriend(self.user, targetId)
+        if action == "delete_friend_through_channel":
+            print("Henooosjflsdjf lsdf")
+            return await async_db.deleteFriendThroughChannel(self.user, targetId)
         if action == ACTION.CREATE_CHANNEL:
             return await async_db.createChannel(self.user, data)
         if action == ACTION.GET_MEMBER_LIST:

@@ -31,6 +31,8 @@ class ACTION:
     SEND_REACTION = 'send_reaction'
     CANCEL_FRIEND_REQUEST = 'cancel_friend_request'
     DELETE_FRIEND = 'delete_friend'
+    DELETE_FRIEND_THROUGH_CHANNEL = 'delete_friend_through_channel',
+    VIDEO_CALL = "video_call"
     
 class TARGET:
     USER = 'user'
@@ -44,6 +46,7 @@ def updateExpoToken(user, data):
     if expo_token:
         userProfile.expo_token = expo_token
         userProfile.save()
+        return data
     else:
         raise Exception("Expo token not found!")
 @database_sync_to_async
@@ -86,7 +89,23 @@ def sendMessage(user, channelId, data):
         'message': 'Send message successfully!'
     }
     
-    
+@database_sync_to_async
+def video_call(user, target, targetId):
+    if target=="channel":
+        member_list = Member.objects.filter(channel_id=targetId)
+        for member in member_list:
+            profile = member.user.profile
+            if profile.expo_token:
+                expo_url = "https://exp.host/--/api/v2/push/send"
+                expo_headers = {
+                    "Content-Type": "application/json",
+                }
+                expo_data = {
+                    "to": profile.expo_token,
+                    "title": f"Cuộc gọi",
+                    "body": "Cuộc gọi"
+                }
+                requests.post(expo_url, headers=expo_headers, json=expo_data)
 @database_sync_to_async
 def sendFriendRequest(user, receiver, data):
     data.update({
@@ -106,6 +125,11 @@ def sendFriendRequest(user, receiver, data):
         friend_with=receiver
     ).exists():
         raise Exception("You have already been friend with this user")
+    notifications = Notification.objects.filter(
+        Q(receiver_id=data['receiver'],
+        sender_id=data['sender']) | Q(receiver_id=data["sender"], sender_id=data["receiver"])
+    )
+    notifications.delete()
     serializers = NotificationSerializer(data=data)
     if (serializers.is_valid(raise_exception=True)):
         serializers.save()
@@ -134,6 +158,10 @@ def friendAccept(consumer, receiver, data):
                 if not channel.is_active:
                     channel.is_active = True
                     channel.save()
+                    notifications = Notification.objects.filter(
+                        Q(receiver_id=receiver, sender_id=user.id) | Q(receiver_id=user.id, sender_id=user.id)
+                    )
+                    notifications.delete()
                     data.update({
                         "receiver": receiver,
                         "sender": user.id,
@@ -143,7 +171,10 @@ def friendAccept(consumer, receiver, data):
                     serializer = NotificationSerializer(data=data)
                     if (serializer.is_valid(raise_exception=True)):
                         serializer.save()
-                        return serializer.data
+                        return {
+                            "status": 200,
+                            "data": serializer.data
+                        }
                     
     channel = Channel.objects.create(
         title=f'{user.username} || {friend_with.username}',
@@ -170,7 +201,10 @@ def friendAccept(consumer, receiver, data):
     serializer = NotificationSerializer(data=data)
     if (serializer.is_valid(raise_exception=True)):
         serializer.save()
-        return serializer.data
+        return {
+            "data": serializer.data,
+            "status": 200
+        }
     
 @database_sync_to_async
 def friendDeny(receiver, senderId):
@@ -218,6 +252,8 @@ def deleteFriend(user, friendId):
     try:
         friend = Friend.objects.filter(Q(user=user, friend_with=friendId) | Q(user_id=friendId, friend_with=user))
         friend.delete()
+        notification = Notification.objects.filter(Q(receiver_id=user.id, sender_id=friendId) | Q(receiver_id=friendId, sender_id=user.id))
+        notification.delete()
         targetChannel = None
         for channel in Channel.objects.all():
             members = channel.members.all()
@@ -226,8 +262,7 @@ def deleteFriend(user, friendId):
                     or (members[1].user == user and members[0].user.id == friendId)):
                         targetChannel = channel
                         break
-        targetChannel.is_active = False
-        targetChannel.save()
+        targetChannel.delete()
         return {
             "message": "Delete friend successfully!",
             "data": {},
@@ -240,6 +275,40 @@ def deleteFriend(user, friendId):
             "data": {}
         }
 
+@database_sync_to_async
+def deleteFriendThroughChannel(user, channelId):
+    try:
+        channel = Channel.objects.get(pk=channelId)
+        friendId = None
+        for member in channel.members.all():
+            if member.user != user:
+                friendId = member.user.id
+                break
+        
+        friend = Friend.objects.filter(Q(user=user, friend_with=friendId) | Q(user_id=friendId, friend_with=user))
+        friend.delete()
+        notification = Notification.objects.filter(Q(receiver_id=user.id, sender_id=friendId) | Q(receiver_id=friendId, sender_id=user.id))
+        notification.delete()
+        targetChannel = None
+        for channel in Channel.objects.all():
+            members = channel.members.all()
+            if members.count() == 2 and channel.type == "CHAT":
+                if ((members[0].user == user and members[1].user.id == friendId)
+                    or (members[1].user == user and members[0].user.id == friendId)):
+                        targetChannel = channel
+                        break
+        targetChannel.delete()
+        return {
+            "message": "Delete friend successfully!",
+            "data": {},
+            "status": 200
+        }
+    except Friend.DoesNotExist:
+        return {
+            "message": "Friend not found",
+            "status": 404,
+            "data": {}
+        }
 @database_sync_to_async
 def getAllChannels(user):
     members = user.members.all()
